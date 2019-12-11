@@ -1,4 +1,4 @@
-TARGET =: clang::5.0
+TARGET =: clang::6.0
 ARCHS = armv7 armv7s arm64 arm64e
 DEBUG = 0
 
