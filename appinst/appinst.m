@@ -32,7 +32,7 @@ typedef int (*MobileInstallationInstall)(CFStringRef path, CFDictionaryRef param
 @interface LSApplicationWorkspace : NSObject
 
 + (id)defaultWorkspace;
-- (BOOL)installApplication:(NSURL *)path withOptions:(NSDictionary *)options;
+- (BOOL)installApplication:(NSURL *)path withOptions:(NSDictionary *)options error:(NSError**)error;
 - (BOOL)uninstallApplication:(NSString *)identifier withOptions:(NSDictionary *)options;
 
 @end
@@ -133,6 +133,8 @@ int main(int argc, const char *argv[]) {
 		LOG(@"Installing %@ ...", appIdentifier);
 		BOOL isInstalled = NO;
 		if (kCFCoreFoundationVersionNumber >= kCFCoreFoundationVersionNumber_iOS_8_0) {
+			LOG("use LSApplicationWorkspace api.");
+
 			// Use LSApplicationWorkspace
 			Class LSApplicationWorkspace_class = objc_getClass("LSApplicationWorkspace");
 			if (LSApplicationWorkspace_class == nil) {
@@ -146,12 +148,19 @@ int main(int argc, const char *argv[]) {
 			}
 
 			// Install file
+			LOG("will LSApplicationWorkspace installApplication...");
 			NSDictionary *options = [NSDictionary dictionaryWithObject:appIdentifier forKey:kIdentifierKey];
 			@try {
-				if ([workspace installApplication:[NSURL fileURLWithPath:installPath] withOptions:options]) {
+				NSError *error_1;
+				if ([workspace installApplication:[NSURL fileURLWithPath:installPath] withOptions:options error:&error_1]) {
 					isInstalled = YES;
+					LOG("LSApplicationWorkspace install done!");
+				} else {
+					LOG("LSApplicationWorkspace installApplication failed! error: %@", error_1);
 				}
-			} @catch (NSException *e) {}
+			} @catch (NSException *e) {
+				LOG("got exception: %@", e);
+			}
 		} else {
 			// Use MobileInstallationInstall
 			void *image = dlopen(MI_PATH, RTLD_LAZY);
